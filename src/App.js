@@ -1,5 +1,7 @@
 import React, {useRef, useCallback, useState} from 'react';
+import produce from 'immer';
 
+// immer에서 제공하는 produce 함수를 호출할 때, 첫 번째 파라미터가 함수 형태라면 업데이트 함수를 반환한다.
 const App = () => {
     const nextId = useRef(1);
     const [form, setForm] = useState({name : '', username : ''});
@@ -11,12 +13,13 @@ const App = () => {
     const onChange = useCallback(
         e => {
             const {name,value} = e.target;
-            setForm({
-                ...form,
-                [name] : value // [name]을 해주는 이유는 객체 속성을 동적으로 업데이트 해주기 위함이다.
-            });
+            setForm(
+                produce(draft => {
+                    draft[name] = [value];
+                })
+            )
         },
-        [form]
+        []
     );
 
     const onSubmit = useCallback(
@@ -28,10 +31,11 @@ const App = () => {
                 username: form.username
             };
 
-            setData({
-                ...data,
-                array: data.array.concat(info)
-            });
+            setData(
+                produce(draft => {
+                    draft.array.push(info);
+                })
+            );
 
             setForm({
                 name: '',
@@ -39,17 +43,18 @@ const App = () => {
             });
             nextId.current += 1;
         },
-        [data,form.name,form.username]
+        [form.name, form.username]
     );
 
     const onRemove = useCallback(
         id => {
-            setData({
-                ...data,
-                array: data.array.filter(info => info.id !== id)
-            });
+            setData(
+                produce(draft => {
+                    draft.array.splice(draft.array.findIndex(info => info.id === id),1) // 뒤에 숫자 1은 deletecounter 로써, 삭제할 요소 개수를 뜻함
+                })
+            )
         },
-        [data]
+        []
     );
 
     return (
